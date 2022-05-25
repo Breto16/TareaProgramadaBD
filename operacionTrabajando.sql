@@ -271,7 +271,8 @@ ON @FechaItera between S.FechaInicio and S.FechaFin
 	DECLARE @lo INT, @hi INT, @Entrada SMALLDATETIME, @Salida SMALLDATETIME, 
 	@ValorDocIdentidad INT, @IdEmpleado INT,  @HoraInicioJornada TIME(0), @HoraFinJornada TIME(0),
 	@horasOrdinarias INT, @SalarioXHora MONEY, @MontoGanadoHO MONEY, @EsJueves BIT, @EsFinMes BIT,
-	@ultimaFecha INT, @HorasLaborales INT
+	@ultimaFecha INT, @HorasLaborales INT, @HorasExtra INT, @MontoGanadoHExtra MONEY
+
 
 
 
@@ -311,26 +312,17 @@ ON @FechaItera between S.FechaInicio and S.FechaFin
 		WHERE (J.IdEmpleado=@IdEmpleado) and (@FechaItera between PS.FechaInicio and PS.FechaFin)
 
 
-
-		SELECT * FROM DBO.Jornada
-
 		
 	
-	----	--determinar horas ordinarias----------------------------------------------------------------------------------------------------------------
+	----	--determinar horas ordinarias y horas laborales----------------------------------------------------------------------------------------------------------------
 
-		set @horasOrdinarias =( DATEDIFF (hh, @Entrada, @Salida  ))
-
-
-
-	--	--como se deben representar la cantidad de horas reales trabajadas se realiza
-	--	-- hora entrada empleado menos la hora salida Real 
-	--	-- calculo extra, hora salida real menos hora salida empleado 
-
-
+		set @horasOrdinarias =( DATEDIFF (hh, @Entrada, @Salida ))
+		set @HorasLaborales = ( DATEDIFF (hh, @HoraInicioJornada, @HoraFinJornada ))
 
 		
 
-	--	--determinar monto ganado por horas ordinarias----------------------------------------------------------------------------------------------
+
+	--	--determinar monto ganado por horas ordinarias y horas Extra----------------------------------------------------------------------------------------------
 		SELECT @SalarioXHora = P.SalarioXHora
 		FROM dbo.Puesto P
 		Inner join dbo.empleado E 
@@ -338,38 +330,47 @@ ON @FechaItera between S.FechaInicio and S.FechaFin
 		WHERE E.Id = @IdEmpleado
 
 		
-		SET @MontoGanadoHO = @horasOrdinarias*@SalarioXHora
+		SET @MontoGanadoHO = @horasOrdinarias*@SalarioXHora-----------@Monto Ganado Horas Ordinarias
+
+
+
+
+
+		SET @HorasExtra = 0
+		IF @horasOrdinarias - @HorasLaborales > 0
+		BEGIN
+			SET @HorasExtra =  @horasOrdinarias - @HorasLaborales 
+			SET @MontoGanadoHExtra = (@HorasExtra*@SalarioXHora)*1.5-----------@Monto Ganado Horas EXTRA
+		END;
+
+		 
 		
 
-	----	--------------------------------------------------------------------------------------------------------------------------------------------------
+	----	--------------------------------------------------------------------------------------------------------------------------------------------------Determina si las extras son por 2
 
 		Declare @dialibre DATE
 
-		IF EXISTS (SELECT * FROM dbo.Feriado f WHERE @FechaItera = f.Fecha) OR  DATENAME(DW, @FechaItera) = 'Sunday'
+		IF (EXISTS (SELECT * FROM dbo.Feriado f WHERE @FechaItera = f.Fecha) OR  DATENAME(DW, @FechaItera) = 'Sunday') AND (@horasOrdinarias - @HorasLaborales > 0)
 		BEGIN
-			
-	------			- determinar horas extraordinarias dobles  y monto
-	------			@montoGanadoHO @horasOrdinarias*Puesto.SalarioxHOra de ese empleado * 2
-				
-	------			@horasExtraOrdinariasDobles = ???
-				
-	------		end else begin
-	------			- determinar horas extraordinarias normales y moto
-	------			@montoGanadoHO @horasOrdinarias*Puesto.SalarioxHOra de ese empleado * 1. 5
-				 
-	------			@horasExtraOrdinariasNormales = ???
-			
+		
+			SET @HorasExtra =  @horasOrdinarias - @HorasLaborales 
+			SET @MontoGanadoHExtra = (@HorasExtra*@SalarioXHora)*2-----------@Monto Ganado Horas EXTRA FERIADO o Domingo
+	
 		END;
 		
 		Set @EsJueves = 0
 		If  DATENAME(DW, @FechaItera) = 'Thursday'
 		BEGIN
 			SET @EsJueves = 1
+
 			  
 			   --calcular deduccionesObligatorias
 			  
 			   --calcular deducciones no obligatorias
 		END;
+
+
+
 		SET @ultimaFecha = DAY(DATEADD(d,1,@FechaItera))
 
 		SET @EsFinMes = 0
@@ -431,14 +432,13 @@ ON @FechaItera between S.FechaInicio and S.FechaFin
 
 
 
-]
+
 	DELETE FROM @EmpleadosInsertar/*Limpia la tabla empelados*/
 	DELETE FROM @Asistencias
 	DELETE FROM @EmpleadosBorrar
 	DELETE FROM @EliminarDeduccionesEmpleado
 	DELETE FROM @NuevosHorarios
 	DELETE FROM @InsertarDeduccionesEmpleado
-
 
 
 
