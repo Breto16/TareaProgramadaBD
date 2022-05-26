@@ -221,18 +221,18 @@ BEGIN
 -------------------------------------------------------------------------------------------------------------------NuevosHorarios
 
 
-INSERT INTO dbo.Jornada([IdEmpleado],
-						[IdSemanaPlanilla],
-						[IdTipoJornada]
-						)
-SELECT  E.Id AS [IdEmpleado],
-		s.Id AS [IdSemanaPlanilla],
-		N.IdJornada
-FROM @NuevosHorarios N
-INNER JOIN Dbo.Empleado E
-ON N.ValorDocumentoIdentidad = E.ValorDocumentoIdentificacion
-INNER JOIN DBO.SemanaPlanilla S
-ON @FechaItera between S.FechaInicio and S.FechaFin
+	INSERT INTO dbo.Jornada([IdEmpleado],
+							[IdSemanaPlanilla],
+							[IdTipoJornada]
+							)
+	SELECT  E.Id AS [IdEmpleado],
+			s.Id AS [IdSemanaPlanilla],
+			N.IdJornada
+	FROM @NuevosHorarios N
+	INNER JOIN Dbo.Empleado E
+	ON N.ValorDocumentoIdentidad = E.ValorDocumentoIdentificacion
+	INNER JOIN DBO.SemanaPlanilla S
+	ON @FechaItera between S.FechaInicio and S.FechaFin
 
 
 
@@ -244,15 +244,24 @@ ON @FechaItera between S.FechaInicio and S.FechaFin
 
 	-------------------------------------------------------------------------------------------------------------------------------------
 	--<AsociaEmpleadoConDeduccion IdDeduccion="2" Monto="0.05" ValorDocumentoIdentidad="64818448" />
-
-
 	-- Insertar deduccion no obligatorias
-    -- INSERT dbo.DeduccionXEmpleado
-	--Select  E.Id as IdEmpleado,
-	--		I.IdDeduccion AS IdTipoDeduccion
-	--FROM @InsertarDeduccionesEmpleado I
-	--INNER JOIN dbo.Empleado E 
-	--ON I.ValorDocumento = E.ValorDocumentoIdentificacion
+
+	INSERT INTO FijaNoObligatoria
+	Select  E.monto AS [Monto]
+	FROM @InsertarDeduccionesEmpleado E
+
+
+
+    INSERT dbo.DeduccionXEmpleado
+	Select  E.Id as IdEmpleado,
+			I.IdDeduccion AS IdTipoDeduccion,
+			f.Id AS [IdFijaNoObligatoria]
+	FROM @InsertarDeduccionesEmpleado I
+	INNER JOIN dbo.Empleado E 
+	ON I.ValorDocumento = E.ValorDocumentoIdentificacion
+	INNER JOIN dbo.FijaNoObligatoria f
+	ON f.Monto = i.monto
+
 
 
 
@@ -382,37 +391,37 @@ ON @FechaItera between S.FechaInicio and S.FechaFin
 			
 			
 		--------------------------------------------------------Se empieza la transaction  
-		--Begin transation
-		--	--insertar asistencias 
-		--	--...
+		BEGIN TRANSACTION
+			--insertar asistencias 
+			--...
 				
-		--	--insertar movimientoplanilla ()
-		--	--select .... @montoGanadoHO ...
-		--	--where  @horasOrdinarias>0
+			--insertar movimientoplanilla ()
+			--select .... @montoGanadoHO ...
+			--where  @horasOrdinarias>0
 				
-		--	--insertar movimientoplanilla ()
-		--	--select .... @montoGanadoHExtrasNormal ...
-		--	--where  @horasExtraOrdinariasNOrmales>0
+			--insertar movimientoplanilla ()
+			--select .... @montoGanadoHExtrasNormal ...
+			--where  @horasExtraOrdinariasNOrmales>0
 				
-		--	--insertar movimientoplanilla ()
-		--	--select .... @montoGanadoHExtrasDobles ...
-		--	--where  @horasExtraOrdinariasDobles>0
+			--insertar movimientoplanilla ()
+			--select .... @montoGanadoHExtrasDobles ...
+			--where  @horasExtraOrdinariasDobles>0
 				
-		--	--if @esJueves
-		--	--Begin
-		--	--		insertar movimientos de deduccion
-		--	--		Cear instancia en semanaplanilla
-		--	--		actualizar planillaxmesxemp
-		--	--end
+		--	IF @esJueves = 1
+		--	Begin
+		--			insertar movimientos de deduccion
+		--			Cear instancia en semanaplanilla
+		--			actualizar planillaxmesxemp
+		--	end
 				
-		--	--If #esfin de mes
-		--	--begin
-		--	--	    crear instancia de PlanillaxMesxEmp
-		--	--end
+		--	If #esfin de mes
+		--	begin
+		--		    crear instancia de PlanillaxMesxEmp
+		--	end
 				
-		--	--Update dbo.PlanillaSemanalXEmp
-		--	--set SalarioBruto=@montoGanadoHO+@montoGanadoHExtrasNormal+@horasExtraOrdinariasDobles
-		--	--where EdEmpleado=@idEmpleado and IdSemama=@IdSemana	
+		--	Update dbo.PlanillaSemanalXEmp
+		--	set SalarioBruto=@montoGanadoHO+@montoGanadoHExtrasNormal+@horasExtraOrdinariasDobles
+		--	where EdEmpleado=@idEmpleado and IdSemama=@IdSemana	
 			
 		--commit transaction
 			
@@ -454,7 +463,6 @@ END;
 
 
 
-
 --INSERT INTO @TipoDeJornadaProximaSemana
 --SELECT  T.Item.value('@IdJornada', 'INT') AS IdJornada,
 --		T.Item.value('@ValorDocumentoIdentidad', 'INT') AS ValorDocumento
@@ -470,3 +478,4 @@ END;
 --FROM @xmlData.nodes('Datos/Catalogos/TiposDeJornada/TipoDeJornada') AS T(Item)
 SET NOCOUNT OFF;
 
+select * from dbo.FijaNoObligatoria
