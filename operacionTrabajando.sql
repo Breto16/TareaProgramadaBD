@@ -1,23 +1,5 @@
 SET NOCOUNT ON
 
-DELETE FROM dbo.Usuario/*Limpia la tabla empelados*/
-DBCC CHECKIDENT ('Usuario', RESEED, 0)/*Reinicia el identify*/
-
-DELETE FROM dbo.DeduccionXEmpleado/*Limpia la tabla empelados*/
-DBCC CHECKIDENT ('DeduccionXEmpleado', RESEED, 0)/*Reinicia el identify*/
-
-DELETE FROM dbo.Jornada
-DBCC CHECKIDENT ('Jornada', RESEED, 0)
-
-DELETE FROM dbo.SemanaPlanilla
-DBCC CHECKIDENT ('SemanaPlanilla', RESEED, 0)
-
-
-
-DELETE FROM dbo.Empleado/*Limpia la tabla empelados*/
-DBCC CHECKIDENT ('Empleado', RESEED, 0)/*Reinicia el identify*/
-
-
 
 DECLARE @xmlData XML---------------XML
  SET @xmlData = (
@@ -245,33 +227,54 @@ BEGIN
 	-------------------------------------------------------------------------------------------------------------------------------------
 	--<AsociaEmpleadoConDeduccion IdDeduccion="2" Monto="0.05" ValorDocumentoIdentidad="64818448" />
 	-- Insertar deduccion no obligatorias
+	IF (NOT EXISTS (SELECT * 
+				FROM dbo.FijaNoObligatoria f 
+				INNER JOIN @InsertarDeduccionesEmpleado E
+				ON E.monto = F.Monto
+				WHERE F.Monto = E.monto))
+		BEGIN
+			INSERT INTO dbo.FijaNoObligatoria
+			Select  E.monto AS [Monto]
+			FROM @InsertarDeduccionesEmpleado E
 
-	INSERT INTO FijaNoObligatoria
-	Select  E.monto AS [Monto]
-	FROM @InsertarDeduccionesEmpleado E
+
+		END;
+
 
 
 
     INSERT dbo.DeduccionXEmpleado
-	Select  E.Id as IdEmpleado,
-			I.IdDeduccion AS IdTipoDeduccion,
-			f.Id AS [IdFijaNoObligatoria]
+	Select  E.Id as [IdEmpleado],
+			I.IdDeduccion AS [IdTipoDeduccion],
+			f.Id AS [IdFijaNoObligatoria],
+			1
 	FROM @InsertarDeduccionesEmpleado I
 	INNER JOIN dbo.Empleado E 
 	ON I.ValorDocumento = E.ValorDocumentoIdentificacion
 	INNER JOIN dbo.FijaNoObligatoria f
 	ON f.Monto = i.monto
 
+	--select * from @InsertarDeduccionesEmpleado
+
+	--select * from dbo.DeduccionXEmpleado
+
+
+	 --desasociar (eliminar deducciones) ...
+	declare @empleadoEliminar int
+	declare @tipoEliminar int
+	SELECT @empleadoEliminar= E.Id, @tipoEliminar = T.Id
+	FROM @EliminarDeduccionesEmpleado D
+	INNER JOIN dbo.Empleado E
+	ON e.ValorDocumentoIdentificacion = D.ValorDocumento
+	INNER JOIN DBO.TipoDeduccion T
+	ON T.Id =D.IdDeduccion 
 
 
 
+	UPDATE dbo.DeduccionXEmpleado
+	set Activo=0
+	where @empleadoEliminar = [IdEmpleado]  AND  @tipoEliminar = [IdTipoDeduccion]
 
-	-- desasociar (eliminar deducciones) ...
-
-
-	--UPDATE dbo.DeduccionXEmpleado
-
-	
 
 	-----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -391,7 +394,7 @@ BEGIN
 			
 			
 		--------------------------------------------------------Se empieza la transaction  
-		BEGIN TRANSACTION
+		--BEGIN TRANSACTION
 			--insertar asistencias 
 			--...
 				
@@ -453,6 +456,8 @@ BEGIN
 
 	SET @diaFlag = @diaFlag+1
 	SET @FechaItera = DATEADD(DAY,1,@FechaItera)
+
+	select * from dbo.DeduccionXEmpleado
 END;
 
 
@@ -478,4 +483,3 @@ END;
 --FROM @xmlData.nodes('Datos/Catalogos/TiposDeJornada/TipoDeJornada') AS T(Item)
 SET NOCOUNT OFF;
 
-select * from dbo.FijaNoObligatoria

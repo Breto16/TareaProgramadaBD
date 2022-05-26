@@ -7,6 +7,56 @@ DECLARE @xmlData XML
 		);
 
 
+DELETE FROM dbo.DeduccionXEmpleado/*Limpia la tabla empelados*/
+DBCC CHECKIDENT ('DeduccionXEmpleado', RESEED, 0)/*Reinicia el identify*/
+
+DELETE FROM dbo.Jornada
+DBCC CHECKIDENT ('Jornada', RESEED, 0)
+
+DELETE FROM dbo.SemanaPlanilla
+DBCC CHECKIDENT ('SemanaPlanilla', RESEED, 0)
+
+
+DELETE FROM	[dbo].[FijaNoObligatoria]
+DBCC CHECKIDENT ('[FijaNoObligatoria]', RESEED, 0)
+
+
+DELETE FROM	dbo.Usuario
+DBCC CHECKIDENT ('Usuario', RESEED, 0)
+
+DELETE FROM dbo.Empleado/*Limpia la tabla empelados*/
+DBCC CHECKIDENT ('Empleado', RESEED, 0)/*Reinicia el identify*/
+
+DELETE FROM dbo.TipoDocuIdentidad/*Limpia la tabla empelados*/
+
+
+DELETE FROM dbo.Departamento/*Limpia la tabla empelados*/
+
+DELETE FROM dbo.Puesto/*Limpia la tabla empelados*/
+
+DELETE FROM dbo.Feriado/*Limpia la tabla empelados*/
+DBCC CHECKIDENT ('Feriado', RESEED, 0)/*Reinicia el identify*/
+
+
+DELETE FROM dbo.TipoJornada
+
+DELETE FROM TipoDeduccion
+
+DELETE FROM [dbo].[DeduccionPorcentualObligatoria]
+DBCC CHECKIDENT ('[DeduccionPorcentualObligatoria]', RESEED, 0)/*Reinicia el identify*/
+
+DELETE FROM [TipoMovPlantilla]
+
+
+DECLARE  @Porcentajes TABLE (
+								Sec INT IDENTITY(1,1),
+								Valor FLOAT
+)
+
+
+INSERT INTO @Porcentajes
+SELECT T.Item.value('@Valor', 'FLOAT') AS Valor
+FROM @xmlData.nodes('Datos/Catalogos/Deducciones/TipoDeDeduccion') as T(Item)	
 
 --TipoDocuIdentidad
 INSERT INTO dbo.TipoDocuIdentidad(Id, Nombre)
@@ -68,9 +118,23 @@ FROM @xmlData.nodes('Datos/Catalogos/Feriados/Feriado') AS T(Item)
 --movimientos
 
 
-INSERT INTO dbo.DeduccionPorcentualObligatoria
-SELECT T.Item.value('@Valor', 'FLOAT') AS [Porcentaje]
-FROM @xmlData.nodes('Datos/Catalogos/Deducciones/TipoDeDeduccion') AS T(Item)
+
+
+
+
+
+
+		INSERT INTO dbo.DeduccionPorcentualObligatoria
+		SELECT P.Valor AS [Porcentaje]
+		FROM @Porcentajes P
+		WHERE  P.Valor = (NOT EXISTS (SELECT * 
+				FROM dbo.DeduccionPorcentualObligatoria f 
+				INNER JOIN  @Porcentajes P
+				ON F.Porcentaje = P.Valor
+				WHERE  F.Porcentaje = P.Valor)
+				)
+
+
 
 
 
