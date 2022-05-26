@@ -122,21 +122,23 @@ FROM @xmlData.nodes('Datos/Catalogos/Feriados/Feriado') AS T(Item)
 
 
 
-
-
-		INSERT INTO dbo.DeduccionPorcentualObligatoria
-		SELECT P.Valor AS [Porcentaje]
-		FROM @Porcentajes P
-		WHERE  P.Valor = (NOT EXISTS (SELECT * 
-				FROM dbo.DeduccionPorcentualObligatoria f 
-				INNER JOIN  @Porcentajes P
-				ON F.Porcentaje = P.Valor
-				WHERE  F.Porcentaje = P.Valor)
-				)
+INSERT INTO dbo.DeduccionPorcentualObligatoria
+SELECT P.Valor AS [Porcentaje]
+FROM @Porcentajes P
 
 
 
-
+DELETE T
+FROM
+(
+SELECT *
+, DupRank = ROW_NUMBER() OVER (
+              PARTITION BY [Porcentaje]
+              ORDER BY (SELECT NULL)
+            )
+FROM dbo.DeduccionPorcentualObligatoria A
+) AS T
+WHERE DupRank > 1 
 
 
 
@@ -149,7 +151,7 @@ SELECT  T.Item.value('@Id', 'INT') AS Id,
 		e.ID AS [IdDeduccionObligatoria]
 FROM @xmlData.nodes('Datos/Catalogos/Deducciones/TipoDeDeduccion') AS T(Item)
 Inner join dbo.DeduccionPorcentualObligatoria E 
-ON e.Id= T.Item.value('@Id', 'INT')
+ON e.Porcentaje= T.Item.value('@Valor', 'FLOAT') 
 WHERE E.Porcentaje = T.Item.value('@Valor', 'FLOAT')
 
 
