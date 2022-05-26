@@ -283,7 +283,7 @@ BEGIN
 	DECLARE @lo INT, @hi INT, @Entrada SMALLDATETIME, @Salida SMALLDATETIME, 
 	@ValorDocIdentidad INT, @IdEmpleado INT,  @HoraInicioJornada TIME(0), @HoraFinJornada TIME(0),
 	@horasOrdinarias INT, @SalarioXHora MONEY, @MontoGanadoHO MONEY, @EsJueves BIT, @EsFinMes BIT,
-	@ultimaFecha INT, @HorasLaborales INT, @HorasExtra INT, @MontoGanadoHExtra MONEY
+	@ultimaFecha INT, @HorasLaborales INT, @HorasExtra INT, @MontoGanadoHExtra MONEY, @IdJornadaAs INT
 
 
 
@@ -303,6 +303,9 @@ BEGIN
 		FROM dbo.Empleado E
 		WHERE E.ValorDocumentoIdentificacion = @ValorDocIdentidad
 
+
+		
+
 		
 
 
@@ -315,7 +318,7 @@ BEGIN
 
 
 
-		Select @HoraInicioJornada=TJ.HoraInicio, @HoraFinJornada=TJ.HoraFin
+		Select @HoraInicioJornada=TJ.HoraInicio, @HoraFinJornada=TJ.HoraFin, @IdJornadaAs = J.Id
 		FROM dbo.SemanaPlanilla PS
 		INNER JOIN dbo.Jornada J 
 		ON PS.Id=J.IdSemanaPlanilla 
@@ -395,9 +398,12 @@ BEGIN
 			
 		--------------------------------------------------------Se empieza la transaction  
 		--BEGIN TRANSACTION
-			--insertar asistencias 
-			--...
-				
+		--	insertar asistencias ----------------------------------------------------------------------no lo he probado
+		--	INSERT INTO dbo.MarcarAsistencia
+		--	SELECT @IdJornadaAs AS [IdJornada],
+		--			@Entrada AS [MarcarInicio],
+		--			@Salida AS [MarcarFin]
+						
 			--insertar movimientoplanilla ()
 			--select .... @montoGanadoHO ...
 			--where  @horasOrdinarias>0
@@ -423,8 +429,8 @@ BEGIN
 		--	end
 				
 		--	Update dbo.PlanillaSemanalXEmp
-		--	set SalarioBruto=@montoGanadoHO+@montoGanadoHExtrasNormal+@horasExtraOrdinariasDobles
-		--	where EdEmpleado=@idEmpleado and IdSemama=@IdSemana	
+		----	set SalarioBruto=@montoGanadoHO+@montoGanadoHExtrasNormal+@horasExtraOrdinariasDobles
+		----	where EdEmpleado=@idEmpleado and IdSemama=@IdSemana	
 			
 		--commit transaction
 			
@@ -453,11 +459,9 @@ BEGIN
 	DELETE FROM @InsertarDeduccionesEmpleado
 
 
-
 	SET @diaFlag = @diaFlag+1
 	SET @FechaItera = DATEADD(DAY,1,@FechaItera)
 
-	select * from dbo.DeduccionXEmpleado
 END;
 
 
