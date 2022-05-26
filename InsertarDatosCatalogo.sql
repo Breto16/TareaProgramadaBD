@@ -6,6 +6,19 @@ DECLARE @xmlData XML
 		AS xmlData
 		);
 
+DELETE FROM dbo.DeduccionXEmpleado/*Limpia la tabla empelados*/
+DBCC CHECKIDENT ('DeduccionXEmpleado', RESEED, 0)/*Reinicia el identify*/
+
+DELETE FROM dbo.Jornada
+DBCC CHECKIDENT ('Jornada', RESEED, 0)
+
+DELETE FROM dbo.SemanaPlanilla
+DBCC CHECKIDENT ('SemanaPlanilla', RESEED, 0)
+
+
+DELETE FROM	[dbo].[FijaNoObligatoria]
+DBCC CHECKIDENT ('[FijaNoObligatoria]', RESEED, 0)
+
 
 DELETE FROM	dbo.Usuario
 DBCC CHECKIDENT ('Usuario', RESEED, 0)
@@ -29,6 +42,7 @@ DELETE FROM dbo.TipoJornada
 DELETE FROM TipoDeduccion
 
 DELETE FROM [dbo].[DeduccionPorcentualObligatoria]
+DBCC CHECKIDENT ('[DeduccionPorcentualObligatoria]', RESEED, 0)/*Reinicia el identify*/
 
 DELETE FROM [TipoMovPlantilla]
 
@@ -81,8 +95,6 @@ SELECT
 	T.Item.value('@HoraSalida', 'time(0)') AS HoraFin
 FROM @xmlData.nodes('Datos/Catalogos/TiposDeJornada/TipoDeJornada') AS T(Item)
 
-select * from dbo.TipoJornada
-
 
 
 
@@ -95,9 +107,9 @@ FROM @xmlData.nodes('Datos/Catalogos/Feriados/Feriado') AS T(Item)
 
 --movimientos
 
+
 INSERT INTO dbo.DeduccionPorcentualObligatoria
-SELECT  T.Item.value('@Id', 'INT') AS Id,
-		T.Item.value('@Valor', 'FLOAT') AS [Porcentaje]
+SELECT T.Item.value('@Valor', 'FLOAT') AS [Porcentaje]
 FROM @xmlData.nodes('Datos/Catalogos/Deducciones/TipoDeDeduccion') AS T(Item)
 
 
@@ -114,6 +126,7 @@ SELECT  T.Item.value('@Id', 'INT') AS Id,
 FROM @xmlData.nodes('Datos/Catalogos/Deducciones/TipoDeDeduccion') AS T(Item)
 Inner join dbo.DeduccionPorcentualObligatoria E 
 ON e.Id= T.Item.value('@Id', 'INT')
+WHERE E.Porcentaje = T.Item.value('@Valor', 'FLOAT')
 
 
 INSERT INTO [dbo].[TipoMovPlantilla](Id,Nombre)
@@ -122,3 +135,5 @@ SELECT  T.Item.value('@Id', 'INT') AS Id,
 FROM @xmlData.nodes('Datos/Catalogos/TiposDeMovimiento/TipoDeMovimiento') AS T(Item)
 
 
+SELECT * FROM DBO.TipoDeduccion
+SELECT * FROM DBO.DeduccionPorcentualObligatoria
