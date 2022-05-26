@@ -6,46 +6,6 @@ DECLARE @xmlData XML
 		AS xmlData
 		);
 
-DELETE FROM dbo.DeduccionXEmpleado/*Limpia la tabla empelados*/
-DBCC CHECKIDENT ('DeduccionXEmpleado', RESEED, 0)/*Reinicia el identify*/
-
-DELETE FROM dbo.Jornada
-DBCC CHECKIDENT ('Jornada', RESEED, 0)
-
-DELETE FROM dbo.SemanaPlanilla
-DBCC CHECKIDENT ('SemanaPlanilla', RESEED, 0)
-
-
-DELETE FROM	[dbo].[FijaNoObligatoria]
-DBCC CHECKIDENT ('[FijaNoObligatoria]', RESEED, 0)
-
-
-DELETE FROM	dbo.Usuario
-DBCC CHECKIDENT ('Usuario', RESEED, 0)
-
-DELETE FROM dbo.Empleado/*Limpia la tabla empelados*/
-DBCC CHECKIDENT ('Empleado', RESEED, 0)/*Reinicia el identify*/
-
-DELETE FROM dbo.TipoDocuIdentidad/*Limpia la tabla empelados*/
-
-
-DELETE FROM dbo.Departamento/*Limpia la tabla empelados*/
-
-DELETE FROM dbo.Puesto/*Limpia la tabla empelados*/
-
-DELETE FROM dbo.Feriado/*Limpia la tabla empelados*/
-DBCC CHECKIDENT ('Feriado', RESEED, 0)/*Reinicia el identify*/
-
-
-DELETE FROM dbo.TipoJornada
-
-DELETE FROM TipoDeduccion
-
-DELETE FROM [dbo].[DeduccionPorcentualObligatoria]
-DBCC CHECKIDENT ('[DeduccionPorcentualObligatoria]', RESEED, 0)/*Reinicia el identify*/
-
-DELETE FROM [TipoMovPlantilla]
-
 
 
 --TipoDocuIdentidad
@@ -134,6 +94,3 @@ SELECT  T.Item.value('@Id', 'INT') AS Id,
 		T.Item.value('@Nombre', 'VARCHAR(64)') AS Nombre
 FROM @xmlData.nodes('Datos/Catalogos/TiposDeMovimiento/TipoDeMovimiento') AS T(Item)
 
-
-SELECT * FROM DBO.TipoDeduccion
-SELECT * FROM DBO.DeduccionPorcentualObligatoria
