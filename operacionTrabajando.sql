@@ -82,11 +82,11 @@ DECLARE @diaFlag INT, @FechaFinSemana DATE
 SET @diaFlag = 1
 SET @FechaFinSemana = DATEADD(DAY,6,@FechaItera)
 
-	INSERT INTO dbo.SemanaPlanilla ([FechaInicio],
-									[FechaFin]
-									)
-	SELECT  @FechaItera AS [FechaInicio],
-			@FechaFinSemana AS [FechaFin]
+INSERT INTO dbo.SemanaPlanilla ([FechaInicio],
+								[FechaFin]
+								)
+SELECT  @FechaItera AS [FechaInicio],
+		@FechaFinSemana AS [FechaFin]
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 WHILE (@FechaItera <= @FechaFin)
@@ -94,13 +94,13 @@ BEGIN
 
 	IF (@diaFlag = 8)
 	BEGIN
-	SET @FechaFinSemana = DATEADD(DAY,6,@FechaItera)
-	INSERT INTO dbo.SemanaPlanilla ([FechaInicio],
-									[FechaFin]
-									)
-	SELECT  @FechaItera AS [FechaInicio],
-			@FechaFinSemana AS [FechaFin]
-	SET @diaFlag = 1
+		SET @FechaFinSemana = DATEADD(DAY,6,@FechaItera)
+		INSERT INTO dbo.SemanaPlanilla ([FechaInicio],
+										[FechaFin]
+										)
+		SELECT  @FechaItera AS [FechaInicio],
+				@FechaFinSemana AS [FechaFin]
+		SET @diaFlag = 1
 	END;
 
 	----------------------------------------------------EmpleadosInsertar                                                                Insertar en orden o da error
@@ -225,65 +225,67 @@ BEGIN
 
 
 	-------------------------------------------------------------------------------------------------------------------------------------
-	--<AsociaEmpleadoConDeduccion IdDeduccion="2" Monto="0.05" ValorDocumentoIdentidad="64818448" />
-	-- Insertar deduccion no obligatorias
-	IF (NOT EXISTS (SELECT * 
-				FROM dbo.FijaNoObligatoria f 
-				INNER JOIN @InsertarDeduccionesEmpleado E
-				ON E.monto = F.Monto
-				WHERE F.Monto = E.monto))
-		BEGIN
-			INSERT INTO dbo.FijaNoObligatoria
-			Select  E.monto AS [Monto]
-			FROM @InsertarDeduccionesEmpleado E
+
+	-- Insertar deduccion no obligatorias                                No funciona porque el profe explico hoy que se hace mediante fechas
+	--IF (NOT EXISTS (SELECT * 
+	--				FROM dbo.FijaNoObligatoria f 
+	--				INNER JOIN @InsertarDeduccionesEmpleado E
+	--				ON E.monto = F.Monto
+	--				WHERE F.Monto = E.monto)
+	--				)
+	--	BEGIN
+	--		INSERT INTO dbo.FijaNoObligatoria
+	--		SELECT  E.monto AS [Monto]
+	--		FROM @InsertarDeduccionesEmpleado E
 
 
-		END;
-
-
-
-
-    INSERT dbo.DeduccionXEmpleado
-	Select  E.Id as [IdEmpleado],
-			I.IdDeduccion AS [IdTipoDeduccion],
-			f.Id AS [IdFijaNoObligatoria],
-			1
-	FROM @InsertarDeduccionesEmpleado I
-	INNER JOIN dbo.Empleado E 
-	ON I.ValorDocumento = E.ValorDocumentoIdentificacion
-	INNER JOIN dbo.FijaNoObligatoria f
-	ON f.Monto = i.monto
-
-	--select * from @InsertarDeduccionesEmpleado
-
-	--select * from dbo.DeduccionXEmpleado
-
-
-	 --desasociar (eliminar deducciones) ...
-	declare @empleadoEliminar int
-	declare @tipoEliminar int
-	SELECT @empleadoEliminar= E.Id, @tipoEliminar = T.Id
-	FROM @EliminarDeduccionesEmpleado D
-	INNER JOIN dbo.Empleado E
-	ON e.ValorDocumentoIdentificacion = D.ValorDocumento
-	INNER JOIN DBO.TipoDeduccion T
-	ON T.Id =D.IdDeduccion 
+	--	END;
 
 
 
-	UPDATE dbo.DeduccionXEmpleado
-	set Activo=0
-	where @empleadoEliminar = [IdEmpleado]  AND  @tipoEliminar = [IdTipoDeduccion]
+
+ --   INSERT dbo.DeduccionXEmpleado
+	--SELECT  E.Id AS [IdEmpleado],
+	--		I.IdDeduccion AS [IdTipoDeduccion],
+	--		f.Id AS [IdFijaNoObligatoria],
+	--		1
+	--FROM @InsertarDeduccionesEmpleado I
+	--INNER JOIN dbo.Empleado E 
+	--ON I.ValorDocumento = E.ValorDocumentoIdentificacion
+	--INNER JOIN dbo.FijaNoObligatoria f
+	--ON f.Monto = i.monto
+
+
+	-- --desasociar (eliminar deducciones) ...
+	--DECLARE @empleadoEliminar INT
+	--DECLARE @tipoEliminar INT
+	--SELECT @empleadoEliminar= E.Id, @tipoEliminar = T.Id
+	--FROM @EliminarDeduccionesEmpleado D
+	--INNER JOIN dbo.Empleado E
+	--ON e.ValorDocumentoIdentificacion = D.ValorDocumento
+	--INNER JOIN DBO.TipoDeduccion T
+	--ON T.Id =D.IdDeduccion 
+
+
+
+	--UPDATE dbo.DeduccionXEmpleado
+	--set Activo=0
+	--where @empleadoEliminar = [IdEmpleado]  AND  @tipoEliminar = [IdTipoDeduccion]
 
 
 	-----------------------------------------------------------------------------------------------------------------------------------------------------
 
 	-- Procesar asistencias
 
-	DECLARE @lo INT, @hi INT, @Entrada SMALLDATETIME, @Salida SMALLDATETIME, 
-	@ValorDocIdentidad INT, @IdEmpleado INT,  @HoraInicioJornada TIME(0), @HoraFinJornada TIME(0),
-	@horasOrdinarias INT, @SalarioXHora MONEY, @MontoGanadoHO MONEY, @EsJueves BIT, @EsFinMes BIT,
-	@ultimaFecha INT, @HorasLaborales INT, @HorasExtra INT, @MontoGanadoHExtra MONEY, @IdJornadaAs INT
+	DECLARE @lo INT, @hi INT, @Entrada SMALLDATETIME,
+			@Salida SMALLDATETIME,@ValorDocIdentidad INT,
+			@IdEmpleado INT,  @HoraInicioJornada TIME(0),
+			@HoraFinJornada TIME(0),@horasOrdinarias INT,
+			@SalarioXHora MONEY,@MontoGanadoHO MONEY,
+			@EsJueves BIT, @EsFinMes BIT,
+			@ultimaFecha INT, @HorasLaborales INT,
+			@HorasExtra INT, @MontoGanadoHExtra MONEY,
+			@IdJornadaAs INT
 
 
 
@@ -314,25 +316,25 @@ BEGIN
 
 	--	--determinar la jornada de esta semana de ese empleado
 
-		DECLARE @HoraInicio date, @HoraFin date
+		DECLARE @HoraInicio DATE, @HoraFin DATE
 
 
 
-		Select @HoraInicioJornada=TJ.HoraInicio, @HoraFinJornada=TJ.HoraFin, @IdJornadaAs = J.Id
+		SELECT @HoraInicioJornada=TJ.HoraInicio, @HoraFinJornada=TJ.HoraFin, @IdJornadaAs = J.Id
 		FROM dbo.SemanaPlanilla PS
 		INNER JOIN dbo.Jornada J 
 		ON PS.Id=J.IdSemanaPlanilla 
 		INNER JOIN dbo.TipoJornada TJ 
 		ON J.IdTipoJornada=TJ.Id
-		WHERE (J.IdEmpleado=@IdEmpleado) and (@FechaItera between PS.FechaInicio and PS.FechaFin)
+		WHERE (J.IdEmpleado=@IdEmpleado) AND (@FechaItera BETWEEN PS.FechaInicio AND PS.FechaFin)
 
 
 		
 	
 	----	--determinar horas ordinarias y horas laborales----------------------------------------------------------------------------------------------------------------
 
-		set @horasOrdinarias =( DATEDIFF (hh, @Entrada, @Salida ))
-		set @HorasLaborales = ( DATEDIFF (hh, @HoraInicioJornada, @HoraFinJornada ))
+		SET @horasOrdinarias =( DATEDIFF (hh, @Entrada, @Salida ))
+		SET @HorasLaborales = ( DATEDIFF (hh, @HoraInicioJornada, @HoraFinJornada ))
 
 		
 
@@ -340,7 +342,7 @@ BEGIN
 	--	--determinar monto ganado por horas ordinarias y horas Extra----------------------------------------------------------------------------------------------
 		SELECT @SalarioXHora = P.SalarioXHora
 		FROM dbo.Puesto P
-		Inner join dbo.empleado E 
+		INNER JOIN dbo.empleado E 
 		ON E.IdPuesto = P.Id
 		WHERE E.Id = @IdEmpleado
 
@@ -363,9 +365,13 @@ BEGIN
 
 	----	--------------------------------------------------------------------------------------------------------------------------------------------------Determina si las extras son por 2
 
-		Declare @dialibre DATE
+		DECLARE @dialibre DATE
 
-		IF (EXISTS (SELECT * FROM dbo.Feriado f WHERE @FechaItera = f.Fecha) OR  DATENAME(DW, @FechaItera) = 'Sunday') AND (@horasOrdinarias - @HorasLaborales > 0)
+		IF (EXISTS (SELECT Fecha 
+					FROM dbo.Feriado f 
+					WHERE @FechaItera = f.Fecha) 
+					OR  DATENAME(DW, @FechaItera) = 'Sunday') 
+					AND (@horasOrdinarias - @HorasLaborales > 0)
 		BEGIN
 		
 			SET @HorasExtra =  @horasOrdinarias - @HorasLaborales 
@@ -398,13 +404,13 @@ BEGIN
 			
 		--------------------------------------------------------Se empieza la transaction  
 		--BEGIN TRANSACTION
-		--	insertar asistencias ----------------------------------------------------------------------no lo he probado
+		----	insertar asistencias ----------------------------------------------------------------------no lo he probado
 		--	INSERT INTO dbo.MarcarAsistencia
 		--	SELECT @IdJornadaAs AS [IdJornada],
 		--			@Entrada AS [MarcarInicio],
 		--			@Salida AS [MarcarFin]
 						
-			--insertar movimientoplanilla ()
+			--insertar movimientoplanilla ()-------------------------------------------------------------Nos faltan tablas por cargar para poder insertar un movimiento
 			--select .... @montoGanadoHO ...
 			--where  @horasOrdinarias>0
 				
@@ -437,7 +443,7 @@ BEGIN
 			
 			
 		
-		set @lo = @lo+1
+		SET @lo = @lo+1
 	
 	END;
 
