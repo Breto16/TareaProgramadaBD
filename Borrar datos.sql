@@ -7,8 +7,13 @@ DBCC CHECKIDENT ('DeduccionXEmpleado', RESEED, 0)/*Reinicia el identify*/
 DELETE FROM dbo.Jornada
 DBCC CHECKIDENT ('Jornada', RESEED, 0)
 
+
 DELETE FROM dbo.SemanaPlanilla
 DBCC CHECKIDENT ('SemanaPlanilla', RESEED, 0)
+
+
+DELETE FROM dbo.MesPlanilla
+DBCC CHECKIDENT ('MesPlanilla', RESEED, 0)
 
 DELETE FROM FijaNoObligatoria
 DBCC CHECKIDENT ('FijaNoObligatoria', RESEED, 0)
